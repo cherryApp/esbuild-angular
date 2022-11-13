@@ -10,7 +10,7 @@ import (
 	"cherryapp/angular/pkg/util"
 )
 
-func GetIndexFileProcessor(outPath string, srcPath string) api.Plugin {
+func GetIndexFileProcessor(srcPath string, outPath string) api.Plugin {
 	return api.Plugin{
 		Name: "indexProcessor",
 		Setup: func(build api.PluginBuild) {

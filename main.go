@@ -6,10 +6,10 @@ import (
 	"path"
 	"time"
 
-	"github.com/evanw/esbuild/pkg/api"
-
 	"cherryapp/angular/pkg/plugin"
 	"cherryapp/angular/pkg/util"
+
+	"github.com/evanw/esbuild/pkg/api"
 )
 
 // Global variables
@@ -25,29 +25,15 @@ func main() {
 	srcPath = path.Join(workingDir, "src")
 	outPath = path.Join(workingDir, "dist", "project")
 
-	buildOptions := api.BuildOptions{
-		EntryPoints: []string{path.Join(srcPath, "main.ts")},
-		Format:      api.FormatESModule,
-		Bundle:      true,
-		Outdir:      outPath,
-		Platform:    api.PlatformBrowser,
-		Splitting:   true,
-		Target:      api.Target(8),
-		Write:       true,
-		TreeShaking: api.TreeShakingTrue,
-		Loader: map[string]api.Loader{
-			".html": api.LoaderText,
-			".css":  api.LoaderText,
-		},
-		Sourcemap:    api.SourceMapExternal,
-		MinifySyntax: true,
-		Plugins: []api.Plugin{
-			plugin.GetIndexFileProcessor(outPath, srcPath),
-			plugin.GetMainManager(),
-			plugin.AngularComponentDecoratorPlugin,
-		},
-		AbsWorkingDir: workingDir,
+	buildOptions, _ := util.GetEsbuildOptions(srcPath, outPath)
+
+	buildOptions.Plugins = []api.Plugin{
+		plugin.GetIndexFileProcessor(srcPath, outPath),
+		plugin.GetMainManager(),
+		plugin.AngularComponentDecoratorPlugin,
 	}
+
+	buildOptions.AbsWorkingDir = workingDir
 
 	tsConfigPath := path.Join(workingDir, "tsconfig.json")
 	if util.StatPath(tsConfigPath) {
