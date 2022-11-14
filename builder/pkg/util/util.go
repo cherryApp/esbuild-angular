@@ -3,15 +3,15 @@ package util
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
+	"path"
+	"reflect"
 	"runtime"
-  "encoding/json"
-  "io/ioutil"
-  "path"
-  "reflect"
 
 	"github.com/evanw/esbuild/pkg/api"
-  "github.com/thedevsaddam/gojsonq/v2"
+
+	gojsonq "github.com/thedevsaddam/gojsonq/v2"
 )
 
 type AngularOptions struct {
@@ -32,60 +32,59 @@ func StatPath(filePath string) bool {
 	return false
 }
 
-func GetInterfaceKeys(currentInterface interface{}) ([]string) {
-  keyList := map[int]string{}
-  iter := reflect.ValueOf(currentInterface).MapRange()
-  i := 0
-  for iter.Next() {
-    key := iter.Key().Interface()
-    fmt.Println( reflect.TypeOf(key) )
-    // value := iter.Value().Interface()
-    keyList[i] = key.(string)
-    i += 1
-  }
+func GetInterfaceKeys(currentInterface interface{}) []string {
+	keyList := map[int]string{}
+	iter := reflect.ValueOf(currentInterface).MapRange()
+	i := 0
+	for iter.Next() {
+		key := iter.Key().Interface()
+		// value := iter.Value().Interface()
+		keyList[i] = key.(string)
+		i += 1
+	}
 
-  keyArray := make([]string, 0, len(keyList))
-  for _, value := range keyList {
-    keyArray = append(keyArray, value)
-  }
+	keyArray := make([]string, 0, len(keyList))
+	for _, value := range keyList {
+		keyArray = append(keyArray, value)
+	}
 
-  return keyArray
+	return keyArray
 }
 
-func GetNestedProp(currentInterface interface{}, keyArray []string) (interface{}) {
+func GetNestedProp(currentInterface interface{}, keyArray []string) {
 
-  for i := 0; i < len(keyArray); i++ {
-    keys := GetInterfaceKeys(currentInterface)
-    fmt.Println(keys[keyArray[i]])
-  }
+	for i := 0; i < len(keyArray); i++ {
+		keys := GetInterfaceKeys(currentInterface)
+		fmt.Println(keys)
+	}
 
-  // projects := GetInterfaceKeys(angularJson["projects"])
-  // project := angularJson["projects"].(map[string]interface{})[projects[0]]
-  // architect := project.(map[string]interface{})["architect"]
-  // build := architect.(map[string]interface{})["build"]
-  // options := build.(map[string]interface{})["options"]
-  // main := options.(map[string]interface{})["main"].(string)
+	// projects := GetInterfaceKeys(angularJson["projects"])
+	// project := angularJson["projects"].(map[string]interface{})[projects[0]]
+	// architect := project.(map[string]interface{})["architect"]
+	// build := architect.(map[string]interface{})["build"]
+	// options := build.(map[string]interface{})["options"]
+	// main := options.(map[string]interface{})["main"].(string)
 }
 
-func ReadJsonFile(filePath string) map[string]interface{} {
-  jsonFile, err := os.Open(filePath)
-  Check(err)
+func ReadJsonFile(filePath string) *gojsonq.JSONQ {
+	jsonFile, err := os.Open(filePath)
+	Check(err)
 
-  defer jsonFile.Close()
+	defer jsonFile.Close()
 
-  byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, _ := io.ReadAll(jsonFile)
 
-  var result map[string]interface{}
+	jsonObject := gojsonq.New().FromString(string(byteValue))
 
-  json.Unmarshal([]byte(byteValue), &result)
+	fmt.Println(jsonObject.FromInterface("projects").First())
 
-  return result
+	return jsonObject
 }
 
 func GetEsbuildOptions(workingDir string) (api.BuildOptions, AngularOptions) {
 
-  outPath := path.Join(workingDir, "dist", "project")
-  // srcPath := path.Join(workingDir, "src")
+	outPath := path.Join(workingDir, "dist", "project")
+	// srcPath := path.Join(workingDir, "src")
 
 	bundle := flag.Bool("bundle", true, "bundle the result")
 	splitting := flag.Bool("splitting", true, "splitting the result")
@@ -97,18 +96,25 @@ func GetEsbuildOptions(workingDir string) (api.BuildOptions, AngularOptions) {
 
 	flag.Parse()
 
-  var angularJson = ReadJsonFile( path.Join(workingDir, "angular.json") )
-  projects := GetInterfaceKeys(angularJson["projects"])
-  project := angularJson["projects"].(map[string]interface{})[projects[0]]
-  architect := project.(map[string]interface{})["architect"]
-  build := architect.(map[string]interface{})["build"]
-  options := build.(map[string]interface{})["options"]
-  main := options.(map[string]interface{})["main"].(string)
+	// var angularJson = ReadJsonFile(path.Join(workingDir, "angular.json"))
+	// projects := GetInterfaceKeys(angularJson["projects"])
+	// project := angularJson["projects"].(map[string]interface{})[projects[0]]
+	// architect := project.(map[string]interface{})["architect"]
+	// build := architect.(map[string]interface{})["build"]
+	// options := build.(map[string]interface{})["options"]
+	// main := options.(map[string]interface{})["main"].(string)
 
-  GetNestedProp(angularJson, []string{"projects", projects[0]})
+	// GetNestedProp(angularJson, []string{"projects", projects[0]})
+
+	angularJson := ReadJsonFile(path.Join(workingDir, "angular.json"))
+
+	project := angularJson.First()
+	fmt.Println(project)
+	// main := project.Find("architect.build.options.main")
 
 	var buildOptions = api.BuildOptions{
-		EntryPoints: []string{ path.Join(workingDir, main)},
+		// EntryPoints: []string{path.Join(workingDir, main.(string))},
+		EntryPoints: []string{path.Join(workingDir, "src", "main.ts")},
 		Format:      api.FormatESModule,
 		Bundle:      *bundle,
 		Outdir:      outPath,
