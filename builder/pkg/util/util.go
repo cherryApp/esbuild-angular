@@ -3,7 +3,6 @@ package util
 import (
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"reflect"
@@ -14,10 +13,9 @@ import (
 	gojsonq "github.com/thedevsaddam/gojsonq/v2"
 )
 
-type AngularOptions struct {
-	serve bool
-	port  int
-}
+var AngularOptions *gojsonq.JSONQ
+
+var ProjectName string
 
 func Check(e error) {
 	if e != nil {
@@ -51,34 +49,6 @@ func GetInterfaceKeys(currentInterface interface{}) []string {
 	return keyArray
 }
 
-func GetNestedProp(currentInterface interface{}, keyArray []string) {
-
-	for i := 0; i < len(keyArray); i++ {
-		keys := GetInterfaceKeys(currentInterface)
-		fmt.Println(keys)
-	}
-
-	// projects := GetInterfaceKeys(angularJson["projects"])
-	// project := angularJson["projects"].(map[string]interface{})[projects[0]]
-	// architect := project.(map[string]interface{})["architect"]
-	// build := architect.(map[string]interface{})["build"]
-	// options := build.(map[string]interface{})["options"]
-	// main := options.(map[string]interface{})["main"].(string)
-}
-
-func ReadJsonFile(filePath string) *gojsonq.JSONQ {
-	jsonFile, err := os.Open(filePath)
-	Check(err)
-
-	defer jsonFile.Close()
-
-	byteValue, _ := io.ReadAll(jsonFile)
-
-	jsonObject := gojsonq.New().FromString(string(byteValue))
-
-	return jsonObject
-}
-
 func ArrayContains(items []string, element string) bool {
   for _, x := range items {
       if x == element {
@@ -88,39 +58,32 @@ func ArrayContains(items []string, element string) bool {
   return false
 }
 
-func GetEsbuildOptions(workingDir string) (api.BuildOptions, AngularOptions) {
+func GetProjectOption(key string) interface{} {
+  return AngularOptions.Copy().Find(ProjectName + "." + key)
+}
 
-	// outPath := path.Join(workingDir, "dist", "project")
-	// srcPath := path.Join(workingDir, "src")
+func GetEsbuildOptions(workingDir string) (api.BuildOptions) {
 
-	bundle := flag.Bool("bundle", true, "bundle the result")
+  // Parse angular.json
+	AngularOptions = gojsonq.New().File(path.Join(workingDir, "angular.json"))
+  projectNames := GetInterfaceKeys( AngularOptions.Copy().Find("projects") )
+
+  // Set flags.
+  bundle := flag.Bool("bundle", true, "bundle the result")
 	splitting := flag.Bool("splitting", true, "splitting the result")
 	write := flag.Bool("write", true, "write the result")
 	minify := flag.Bool("minify", false, "minify the result")
 
-  project := flag.String("project", "#", "project name")
-  outPath := flag.String("outputPath", "#", "project name")
-	serve := flag.Bool("serve", false, "start the devserver")
-	port := flag.Int("port", 4200, "devserver port")
-
+  project := flag.String("project", projectNames[0], "project name")
+	// serve := flag.Bool("serve", false, "start the devserver")
+	// port := flag.Int("port", 4200, "devserver port")
 
 	flag.Parse()
 
-	angularJson := gojsonq.New().File(path.Join(workingDir, "angular.json"))
-  projectNames := GetInterfaceKeys( angularJson.Copy().Find("projects") )
-  projectName := projectNames[0]
-  if *project != "#" && ArrayContains(projectNames, *project) {
-    projectName = *project
-  }
-
-  pr := "projects."+projectName
-	main := angularJson.Copy().Find(pr+".architect.build.options.main")
-
-  outputPath := angularJson.Copy().Find(pr+".architect.build.options.outputPath")
-  if *outPath != "#" {
-    outputPath = *outPath
-  }
-
+  // Set paths.
+  ProjectName = "projects."+*project
+	main := GetProjectOption("architect.build.options.main")
+  outputPath := GetProjectOption("architect.build.options.outputPath")
 
 	var buildOptions = api.BuildOptions{
 		EntryPoints: []string{path.Join(workingDir, main.(string))},
@@ -140,29 +103,8 @@ func GetEsbuildOptions(workingDir string) (api.BuildOptions, AngularOptions) {
 		MinifySyntax: *minify,
 	}
 
-	var angularOptions = AngularOptions{
-		serve: *serve,
-		port:  *port,
-	}
+	return buildOptions
 
-	return buildOptions, angularOptions
-
-}
-
-func GetAngularOptions(srcPath string, outPath string) AngularOptions {
-
-	serve := flag.Bool("serve", false, "start the devserver")
-	port := flag.Int("port", 4200, "devserver port")
-
-	// var svar string
-	// flag.StringVar(&svar, "svar", "bar", "a string var")
-
-	flag.Parse()
-
-	return AngularOptions{
-		serve: *serve,
-		port:  *port,
-	}
 }
 
 // PrintMemUsage outputs the current, total and OS memory being used. As well as the number

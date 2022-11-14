@@ -22,12 +22,17 @@ func main() {
 	wd, _ := os.Getwd()
 	workingDir = wd
 
-	buildOptions, _ := util.GetEsbuildOptions(workingDir)
+	buildOptions := util.GetEsbuildOptions(workingDir)
+
+  indexFilePath := path.Join(
+    workingDir,
+    util.GetProjectOption("architect.build.options.index").(string),
+  )
 
   srcPath = path.Dir( buildOptions.EntryPoints[0] )
 
 	buildOptions.Plugins = []api.Plugin{
-		plugin.GetIndexFileProcessor(srcPath, buildOptions.Outdir),
+		plugin.GetIndexFileProcessor(indexFilePath, buildOptions.Outdir),
 		plugin.GetMainManager(),
 		plugin.AngularComponentDecoratorPlugin,
 	}

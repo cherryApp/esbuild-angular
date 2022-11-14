@@ -10,7 +10,7 @@ import (
 	"cherryApp/esbuild-angular/pkg/util"
 )
 
-func GetIndexFileProcessor(srcPath string, outPath string) api.Plugin {
+func GetIndexFileProcessor(indexFilePath string, outPath string) api.Plugin {
 	return api.Plugin{
 		Name: "indexProcessor",
 		Setup: func(build api.PluginBuild) {
@@ -18,7 +18,7 @@ func GetIndexFileProcessor(srcPath string, outPath string) api.Plugin {
 			indexFileContent := ""
 
 			build.OnStart(func() (api.OnStartResult, error) {
-				indexContent, err := os.ReadFile(path.Join(srcPath, "index.html"))
+				indexContent, err := os.ReadFile(indexFilePath)
 				util.Check(err)
 				indexFileContent = string(indexContent)
 				return api.OnStartResult{}, nil
