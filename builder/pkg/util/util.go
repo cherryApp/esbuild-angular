@@ -76,14 +76,21 @@ func ReadJsonFile(filePath string) *gojsonq.JSONQ {
 
 	jsonObject := gojsonq.New().FromString(string(byteValue))
 
-	fmt.Println(jsonObject.FromInterface("projects").First())
-
 	return jsonObject
+}
+
+func ArrayContains(items []string, element string) bool {
+  for _, x := range items {
+      if x == element {
+          return true
+      }
+  }
+  return false
 }
 
 func GetEsbuildOptions(workingDir string) (api.BuildOptions, AngularOptions) {
 
-	outPath := path.Join(workingDir, "dist", "project")
+	// outPath := path.Join(workingDir, "dist", "project")
 	// srcPath := path.Join(workingDir, "src")
 
 	bundle := flag.Bool("bundle", true, "bundle the result")
@@ -91,33 +98,35 @@ func GetEsbuildOptions(workingDir string) (api.BuildOptions, AngularOptions) {
 	write := flag.Bool("write", true, "write the result")
 	minify := flag.Bool("minify", false, "minify the result")
 
+  project := flag.String("project", "#", "project name")
+  outPath := flag.String("outputPath", "#", "project name")
 	serve := flag.Bool("serve", false, "start the devserver")
 	port := flag.Int("port", 4200, "devserver port")
 
+
 	flag.Parse()
 
-	// var angularJson = ReadJsonFile(path.Join(workingDir, "angular.json"))
-	// projects := GetInterfaceKeys(angularJson["projects"])
-	// project := angularJson["projects"].(map[string]interface{})[projects[0]]
-	// architect := project.(map[string]interface{})["architect"]
-	// build := architect.(map[string]interface{})["build"]
-	// options := build.(map[string]interface{})["options"]
-	// main := options.(map[string]interface{})["main"].(string)
+	angularJson := gojsonq.New().File(path.Join(workingDir, "angular.json"))
+  projectNames := GetInterfaceKeys( angularJson.Copy().Find("projects") )
+  projectName := projectNames[0]
+  if *project != "#" && ArrayContains(projectNames, *project) {
+    projectName = *project
+  }
 
-	// GetNestedProp(angularJson, []string{"projects", projects[0]})
+  pr := "projects."+projectName
+	main := angularJson.Copy().Find(pr+".architect.build.options.main")
 
-	angularJson := ReadJsonFile(path.Join(workingDir, "angular.json"))
+  outputPath := angularJson.Copy().Find(pr+".architect.build.options.outputPath")
+  if *outPath != "#" {
+    outputPath = *outPath
+  }
 
-	project := angularJson.First()
-	fmt.Println(project)
-	// main := project.Find("architect.build.options.main")
 
 	var buildOptions = api.BuildOptions{
-		// EntryPoints: []string{path.Join(workingDir, main.(string))},
-		EntryPoints: []string{path.Join(workingDir, "src", "main.ts")},
+		EntryPoints: []string{path.Join(workingDir, main.(string))},
 		Format:      api.FormatESModule,
 		Bundle:      *bundle,
-		Outdir:      outPath,
+		Outdir:      outputPath.(string),
 		Platform:    api.PlatformBrowser,
 		Splitting:   *splitting,
 		Target:      api.Target(8),

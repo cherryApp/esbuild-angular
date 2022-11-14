@@ -1,35 +1,33 @@
 package main
 
 import (
-  	"fmt"
+	"fmt"
 	"os"
 	"path"
 	"time"
 
-  	"github.com/evanw/esbuild/pkg/api"
+	"github.com/evanw/esbuild/pkg/api"
 
-    "cherryApp/esbuild-angular/pkg/plugin"
-    "cherryApp/esbuild-angular/pkg/util"
-
+	"cherryApp/esbuild-angular/pkg/plugin"
+	"cherryApp/esbuild-angular/pkg/util"
 )
 
 // Global variables
 var workingDir string
 var srcPath string
-var outPath string
 
 func main() {
 	start := time.Now()
 
 	wd, _ := os.Getwd()
 	workingDir = wd
-	srcPath = path.Join(workingDir, "src")
-	outPath = path.Join(workingDir, "dist", "project")
 
 	buildOptions, _ := util.GetEsbuildOptions(workingDir)
 
+  srcPath = path.Dir( buildOptions.EntryPoints[0] )
+
 	buildOptions.Plugins = []api.Plugin{
-		plugin.GetIndexFileProcessor(srcPath, outPath),
+		plugin.GetIndexFileProcessor(srcPath, buildOptions.Outdir),
 		plugin.GetMainManager(),
 		plugin.AngularComponentDecoratorPlugin,
 	}
