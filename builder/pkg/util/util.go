@@ -17,6 +17,21 @@ var AngularOptions *gojsonq.JSONQ
 
 var ProjectName string
 
+func CopyFile(sourceFile string, destinationFile string) {
+  input, err := os.ReadFile(sourceFile)
+  if err != nil {
+          fmt.Println(err)
+          return
+  }
+
+  err = os.WriteFile(destinationFile, input, 0644)
+  if err != nil {
+          fmt.Println("Error creating", destinationFile)
+          fmt.Println(err)
+          return
+  }
+}
+
 func Check(e error) {
 	if e != nil {
 		panic(e)

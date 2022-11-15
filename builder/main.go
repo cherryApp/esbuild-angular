@@ -32,6 +32,11 @@ func main() {
   srcPath = path.Dir( buildOptions.EntryPoints[0] )
 
 	buildOptions.Plugins = []api.Plugin{
+    plugin.GetAssetManager(
+      workingDir,
+      util.GetProjectOption( "architect.build.options.assets").([]interface{}),
+      buildOptions.Outdir,
+    ),
 		plugin.GetIndexFileProcessor(indexFilePath, buildOptions.Outdir),
 		plugin.GetMainManager(),
 		plugin.AngularComponentDecoratorPlugin,

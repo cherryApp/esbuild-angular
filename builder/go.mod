@@ -7,4 +7,8 @@ require (
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
 )
 
-require golang.org/x/sys v0.2.0 // indirect
+require (
+	github.com/nmrshll/go-cp v0.0.0-20180115193924-61436d3b7cfa
+	github.com/otiai10/copy v1.9.0
+	golang.org/x/sys v0.2.0 // indirect
+)
