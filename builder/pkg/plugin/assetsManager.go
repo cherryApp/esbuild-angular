@@ -3,7 +3,10 @@ package plugin
 import (
 	"os"
 	"path"
+  "path/filepath"
   "fmt"
+  "regexp"
+  "strings"
 
 	cp "github.com/otiai10/copy"
 
@@ -11,8 +14,60 @@ import (
 
 	"github.com/evanw/esbuild/pkg/api"
 
+  "github.com/c9s/c6/parser"
+	"github.com/c9s/c6/runtime"
+	"github.com/c9s/c6/compiler"
+
   "cherryApp/esbuild-angular/pkg/util"
 )
+
+var regexpDataUrl = regexp.MustCompile(`data\:`);
+var regexpPathSeparator = regexp.MustCompile(`\\|\/`);
+var regexpSourcemap = regexp.MustCompile(`\/\*.*sourceMappingURL\=.*\*\/`)
+
+// Compile sass files.
+func SassCompiler(outPath string, sassFile string) string {
+	context := runtime.NewContext()
+	parser := parser.NewParser(context)
+	stmts, err := parser.ParseScssFile(sassFile)
+	if err != nil {
+		fmt.Println(err)
+	}
+	compiler := compiler.NewCompactCompiler(context)
+	out := compiler.CompileString(stmts)
+	os.WriteFile( path.Join(outPath, "vendor.css"), []byte(out), 0644)
+
+  return ""
+}
+
+func UrlUnpacker(workingDir string, outPath string, cssPath string, cssContent string) string {
+  var re = regexp.MustCompile(`(?m)url\(['"]?([^\)'"\?]*)[\"\?\)]?`)
+  var matches = re.FindAllStringSubmatch(cssContent, -1)
+  if len(matches) == 0 {
+    return cssContent
+  }
+
+  cssContent = regexpSourcemap.ReplaceAllString(cssContent, "")
+
+  parentDir := filepath.Dir(cssPath)
+  pathSeparator := string(os.PathSeparator)
+  for _, match := range matches {
+    if regexpDataUrl.MatchString(match[0]) {
+      continue
+    }
+
+    // [url('../fonts/fontawesome-webfont.eot?, ../fonts/fontawesome-webfont.eot]
+    urlPath := regexpPathSeparator.ReplaceAllString(match[1], pathSeparator)
+    sourcePath := path.Join(parentDir, urlPath)
+    fileName := filepath.Base(urlPath)
+    targetPath := path.Join(outPath, fileName)
+
+    cpf.CopyFile(sourcePath, targetPath)
+    cssContent = strings.Replace(cssContent, match[1], fileName, 2)
+  }
+
+  return cssContent
+}
 
 func GetAssetManager(workingDir string, assets []interface{}, outPath string) api.Plugin {
 	return api.Plugin{
@@ -43,6 +98,18 @@ func GetAssetManager(workingDir string, assets []interface{}, outPath string) ap
       build.OnStart(func() (api.OnStartResult, error) {
         cssContent := ""
 
+        styles := util.GetProjectOption("architect.build.options.styles")
+        for _, v := range styles.([]interface{}) {
+          stylePath := path.Join(workingDir, v.(string));
+          styleContent, err := os.ReadFile(stylePath)
+          if err != nil {
+            fmt.Println("ERROR! In angular.json styles wrong filepath:", stylePath)
+          } else {
+            content := UrlUnpacker(workingDir, outPath, stylePath, string(styleContent))
+            cssContent += content + "\n\n"
+          }
+        }
+
         err := os.WriteFile(
           path.Join(outPath, "main.css"),
           []byte(cssContent),
@@ -63,7 +130,7 @@ func GetAssetManager(workingDir string, assets []interface{}, outPath string) ap
           scriptPath := path.Join(workingDir, v.(string));
           scriptContent, err := os.ReadFile(scriptPath)
           if err != nil {
-            fmt.Println("ERROR! Wrong filepath in: ", scriptPath)
+            fmt.Println("ERROR! In angular.json scripts wrong filepath:", scriptPath)
           } else {
             vendorJSContent += string(scriptContent) + "\n\n"
           }
