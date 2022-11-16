@@ -87,7 +87,7 @@ func GetEsbuildOptions(workingDir string) (api.BuildOptions) {
   bundle := flag.Bool("bundle", true, "bundle the result")
 	splitting := flag.Bool("splitting", true, "splitting the result")
 	write := flag.Bool("write", true, "write the result")
-	minify := flag.Bool("minify", false, "minify the result")
+	minify := flag.Bool("minify", true, "minify the result")
 
   project := flag.String("project", projectNames[0], "project name")
 	// serve := flag.Bool("serve", false, "start the devserver")
@@ -115,6 +115,7 @@ func GetEsbuildOptions(workingDir string) (api.BuildOptions) {
 			".css":  api.LoaderText,
 		},
 		Sourcemap:    api.SourceMapExternal,
+    MangleProps: "_$",
 		MinifySyntax: *minify,
 	}
 

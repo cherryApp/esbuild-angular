@@ -7,7 +7,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "build:esbuild": ".\\builder\\esbuild-angular.exe"
+    "build:esbuild": ".\\builder\\esbuild-angular.exe --minify=true"
   },
   "private": true,
   "dependencies": {
