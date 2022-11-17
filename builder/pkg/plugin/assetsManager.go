@@ -1,12 +1,14 @@
 package plugin
 
 import (
+	"bytes"
+	"fmt"
+	"log"
 	"os"
 	"path"
-  "path/filepath"
-  "fmt"
-  "regexp"
-  "strings"
+	"path/filepath"
+	"regexp"
+	"strings"
 
 	cp "github.com/otiai10/copy"
 
@@ -14,9 +16,9 @@ import (
 
 	"github.com/evanw/esbuild/pkg/api"
 
-  "github.com/wellington/go-libsass"
+	"github.com/wellington/go-libsass"
 
-  "cherryApp/esbuild-angular/pkg/util"
+	"cherryApp/esbuild-angular/pkg/util"
 )
 
 // https://github.com/skeeto/w64devkit/releases/download/v1.17.0/w64devkit-1.17.0.zip
@@ -28,9 +30,19 @@ var regexpSourcemap = regexp.MustCompile(`\/\*.*sourceMappingURL\=.*\*\/`)
 var regexpScssFile = regexp.MustCompile(`\.scss$`)
 
 // Compile sass files.
-func SassCompiler(outPath string, sassFile string) string {
+func SassCompiler(outPath string, styleContent string) string {
+  buf := bytes.NewBufferString(styleContent)
+  var compiled bytes.Buffer
 
-  return ""
+  comp, err := libsass.New(&compiled, buf)
+  if err != nil {
+    log.Fatal(err)
+  }
+
+  if err := comp.Run(); err != nil {
+    log.Fatal(err)
+  }
+  return compiled.String()
 }
 
 func UrlUnpacker(workingDir string, outPath string, cssPath string, cssContent string) string {
@@ -94,15 +106,16 @@ func GetAssetManager(workingDir string, assets []interface{}, outPath string) ap
         styles := util.GetProjectOption("architect.build.options.styles")
         for _, v := range styles.([]interface{}) {
           stylePath := path.Join(workingDir, v.(string));
-          styleContent, err := os.ReadFile(stylePath)
+          fileContent, err := os.ReadFile(stylePath)
+          styleContent := string(fileContent)
           if err != nil {
             fmt.Println("ERROR! In angular.json styles wrong filepath:", stylePath)
           } else {
             content := ""
             if regexpScssFile.MatchString(v.(string)) {
-              content = SassCompiler(outPath, stylePath)
+              content = SassCompiler(outPath, styleContent)
             } else {
-              content = UrlUnpacker(workingDir, outPath, stylePath, string(styleContent))
+              content = UrlUnpacker(workingDir, outPath, stylePath, styleContent)
             }
 
             cssContent += content + "\n\n"
