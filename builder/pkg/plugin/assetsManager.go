@@ -16,7 +16,7 @@ import (
 
 	"github.com/evanw/esbuild/pkg/api"
 
-	"github.com/wellington/go-libsass"
+	libsass "github.com/wellington/go-libsass"
 
 	"cherryApp/esbuild-angular/pkg/util"
 )
@@ -30,13 +30,19 @@ var regexpSourcemap = regexp.MustCompile(`\/\*.*sourceMappingURL\=.*\*\/`)
 var regexpScssFile = regexp.MustCompile(`\.scss$`)
 
 // Compile sass files.
-func SassCompiler(outPath string, styleContent string) string {
+func SassCompiler(workingDir string, outPath string, styleContent string) string {
   buf := bytes.NewBufferString(styleContent)
   var compiled bytes.Buffer
 
   comp, err := libsass.New(&compiled, buf)
   if err != nil {
     log.Fatal(err)
+  }
+
+  includePaths := []string{workingDir}
+	optionError := comp.Option(libsass.IncludePaths(includePaths))
+  if optionError != nil {
+    log.Fatal(optionError)
   }
 
   if err := comp.Run(); err != nil {
@@ -113,7 +119,7 @@ func GetAssetManager(workingDir string, assets []interface{}, outPath string) ap
           } else {
             content := ""
             if regexpScssFile.MatchString(v.(string)) {
-              content = SassCompiler(outPath, styleContent)
+              content = SassCompiler(workingDir, outPath, styleContent)
             } else {
               content = UrlUnpacker(workingDir, outPath, stylePath, styleContent)
             }
