@@ -14,28 +14,21 @@ import (
 
 	"github.com/evanw/esbuild/pkg/api"
 
-  "github.com/c9s/c6/parser"
-	"github.com/c9s/c6/runtime"
-	"github.com/c9s/c6/compiler"
+  "github.com/wellington/go-libsass"
 
   "cherryApp/esbuild-angular/pkg/util"
 )
 
+// https://github.com/skeeto/w64devkit/releases/download/v1.17.0/w64devkit-1.17.0.zip
+// go install github.com/wellington/go-libsass
+
 var regexpDataUrl = regexp.MustCompile(`data\:`);
 var regexpPathSeparator = regexp.MustCompile(`\\|\/`);
 var regexpSourcemap = regexp.MustCompile(`\/\*.*sourceMappingURL\=.*\*\/`)
+var regexpScssFile = regexp.MustCompile(`\.scss$`)
 
 // Compile sass files.
 func SassCompiler(outPath string, sassFile string) string {
-	context := runtime.NewContext()
-	parser := parser.NewParser(context)
-	stmts, err := parser.ParseScssFile(sassFile)
-	if err != nil {
-		fmt.Println(err)
-	}
-	compiler := compiler.NewCompactCompiler(context)
-	out := compiler.CompileString(stmts)
-	os.WriteFile( path.Join(outPath, "vendor.css"), []byte(out), 0644)
 
   return ""
 }
@@ -105,7 +98,13 @@ func GetAssetManager(workingDir string, assets []interface{}, outPath string) ap
           if err != nil {
             fmt.Println("ERROR! In angular.json styles wrong filepath:", stylePath)
           } else {
-            content := UrlUnpacker(workingDir, outPath, stylePath, string(styleContent))
+            content := ""
+            if regexpScssFile.MatchString(v.(string)) {
+              content = SassCompiler(outPath, stylePath)
+            } else {
+              content = UrlUnpacker(workingDir, outPath, stylePath, string(styleContent))
+            }
+
             cssContent += content + "\n\n"
           }
         }
