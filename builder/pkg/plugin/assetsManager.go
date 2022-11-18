@@ -3,20 +3,21 @@ package plugin
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
 
 	cp "github.com/otiai10/copy"
+	"github.com/wellington/go-libsass"
 
 	cpf "github.com/nmrshll/go-cp"
 
 	"github.com/evanw/esbuild/pkg/api"
-
-	libsass "github.com/wellington/go-libsass"
 
 	"cherryApp/esbuild-angular/pkg/util"
 )
@@ -28,6 +29,9 @@ var regexpDataUrl = regexp.MustCompile(`data\:`);
 var regexpPathSeparator = regexp.MustCompile(`\\|\/`);
 var regexpSourcemap = regexp.MustCompile(`\/\*.*sourceMappingURL\=.*\*\/`)
 var regexpScssFile = regexp.MustCompile(`\.scss$`)
+var ScssWorker *exec.Cmd
+var ScssWorkerIn *io.Reader
+var ScssWorkerOut *io.Writer
 
 // Compile sass files.
 func SassCompiler(workingDir string, outPath string, styleContent string) string {
@@ -49,6 +53,8 @@ func SassCompiler(workingDir string, outPath string, styleContent string) string
     log.Fatal(err)
   }
   return compiled.String()
+  // fmt.Println(workingDir, outPath, styleContent)
+  // return ""
 }
 
 func UrlUnpacker(workingDir string, outPath string, cssPath string, cssContent string) string {
@@ -85,6 +91,16 @@ func GetAssetManager(workingDir string, assets []interface{}, outPath string) ap
 		Name: "assetManager",
 		Setup: func(build api.PluginBuild) {
 
+      // var out bytes.Buffer
+      // ScssWorker = exec.Command("./scss-builder/scss-builder.exe")
+      // ScssWorker.Stdin = bytes.NewBuffer([]byte(""))
+      // ScssWorker.Stdout = &out
+      // err := ScssWorker.Start()
+      // if err != nil {
+      //   panic(err)
+      // }
+      // fmt.Println(out.Bytes())
+
       // Copy assets.
 			build.OnStart(func() (api.OnStartResult, error) {
         for _, v := range assets {
@@ -120,6 +136,7 @@ func GetAssetManager(workingDir string, assets []interface{}, outPath string) ap
             content := ""
             if regexpScssFile.MatchString(v.(string)) {
               content = SassCompiler(workingDir, outPath, styleContent)
+
             } else {
               content = UrlUnpacker(workingDir, outPath, stylePath, styleContent)
             }
