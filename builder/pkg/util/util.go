@@ -18,18 +18,18 @@ var AngularOptions *gojsonq.JSONQ
 var ProjectName string
 
 func CopyFile(sourceFile string, destinationFile string) {
-  input, err := os.ReadFile(sourceFile)
-  if err != nil {
-          fmt.Println(err)
-          return
-  }
+	input, err := os.ReadFile(sourceFile)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-  err = os.WriteFile(destinationFile, input, 0644)
-  if err != nil {
-          fmt.Println("Error creating", destinationFile)
-          fmt.Println(err)
-          return
-  }
+	err = os.WriteFile(destinationFile, input, 0644)
+	if err != nil {
+		fmt.Println("Error creating", destinationFile)
+		fmt.Println(err)
+		return
+	}
 }
 
 func Check(e error) {
@@ -65,40 +65,53 @@ func GetInterfaceKeys(currentInterface interface{}) []string {
 }
 
 func ArrayContains(items []string, element string) bool {
-  for _, x := range items {
-      if x == element {
-          return true
-      }
-  }
-  return false
+	for _, x := range items {
+		if x == element {
+			return true
+		}
+	}
+	return false
 }
 
 func GetProjectOption(key string) interface{} {
-  return AngularOptions.Copy().Find(ProjectName + "." + key)
+	return AngularOptions.Copy().Find(ProjectName + "." + key)
 }
 
-func GetEsbuildOptions(workingDir string) (api.BuildOptions) {
+func CheckBuildPath(outputDir string) {
+	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
+		fmt.Println("Creating output directory:", outputDir)
+		err := os.MkdirAll(outputDir, os.ModePerm)
+		if err != nil {
+			fmt.Println("ERROR creating output directory:", outputDir)
+			os.Exit(1)
+		}
+	}
+}
 
-  // Parse angular.json
+func GetEsbuildOptions(workingDir string) api.BuildOptions {
+
+	// Parse angular.json
 	AngularOptions = gojsonq.New().File(path.Join(workingDir, "angular.json"))
-  projectNames := GetInterfaceKeys( AngularOptions.Copy().Find("projects") )
+	projectNames := GetInterfaceKeys(AngularOptions.Copy().Find("projects"))
 
-  // Set flags.
-  bundle := flag.Bool("bundle", true, "bundle the result")
+	// Set flags.
+	bundle := flag.Bool("bundle", true, "bundle the result")
 	splitting := flag.Bool("splitting", true, "splitting the result")
 	write := flag.Bool("write", true, "write the result")
 	minify := flag.Bool("minify", true, "minify the result")
 
-  project := flag.String("project", projectNames[0], "project name")
+	project := flag.String("project", projectNames[0], "project name")
 	// serve := flag.Bool("serve", false, "start the devserver")
 	// port := flag.Int("port", 4200, "devserver port")
 
 	flag.Parse()
 
-  // Set paths.
-  ProjectName = "projects."+*project
+	// Set paths.
+	ProjectName = "projects." + *project
 	main := GetProjectOption("architect.build.options.main")
-  outputPath := GetProjectOption("architect.build.options.outputPath")
+	outputPath := GetProjectOption("architect.build.options.outputPath")
+
+	CheckBuildPath(outputPath.(string))
 
 	var buildOptions = api.BuildOptions{
 		EntryPoints: []string{path.Join(workingDir, main.(string))},
@@ -115,7 +128,7 @@ func GetEsbuildOptions(workingDir string) (api.BuildOptions) {
 			".css":  api.LoaderText,
 		},
 		Sourcemap:    api.SourceMapExternal,
-    MangleProps: "_$",
+		MangleProps:  "_$",
 		MinifySyntax: *minify,
 	}
 
