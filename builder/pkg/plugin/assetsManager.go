@@ -32,24 +32,6 @@ var ScssWorkerOut *io.Writer
 
 // Compile sass files.
 func SassCompiler(workingDir string, scssPath string) string {
-	// buf := bytes.NewBufferString(styleContent)
-	// var compiled bytes.Buffer
-
-	// comp, err := libsass.New(&compiled, buf)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// includePaths := []string{workingDir}
-	// optionError := comp.Option(libsass.IncludePaths(includePaths))
-	// if optionError != nil {
-	// 	log.Fatal(optionError)
-	// }
-
-	// if err := comp.Run(); err != nil {
-	// 	log.Fatal(err)
-	// }
-	// return compiled.String()
 	out, err := exec.Command(
 		"./scss-builder/scss-builder.exe",
 		workingDir,
@@ -95,16 +77,6 @@ func GetAssetManager(workingDir string, assets []interface{}, outPath string) ap
 	return api.Plugin{
 		Name: "assetManager",
 		Setup: func(build api.PluginBuild) {
-
-			// var out bytes.Buffer
-			// ScssWorker = exec.Command("./scss-builder/scss-builder.exe")
-			// ScssWorker.Stdin = bytes.NewBuffer([]byte("command|D:/Projects/esbuild-angular|D:/Projects/esbuild-angular/src/styles.scss"))
-			// ScssWorker.Stdout = &out
-			// err := ScssWorker.Start()
-			// if err != nil {
-			// 	panic(err)
-			// }
-			// fmt.Println(out.Bytes())
 
 			// Copy assets.
 			build.OnStart(func() (api.OnStartResult, error) {

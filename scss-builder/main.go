@@ -27,6 +27,10 @@ func SassCompiler(workingDir string, scssPath string) string {
 	}
 
 	styleContent := string(fileContent)
+	if len(styleContent) < 3 {
+		return ""
+	}
+
 	buf := bytes.NewBufferString(styleContent)
 	var compiled bytes.Buffer
 
