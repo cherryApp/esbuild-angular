@@ -32,8 +32,11 @@ var ScssWorkerOut *io.Writer
 
 // Compile sass files.
 func SassCompiler(workingDir string, scssPath string) string {
+	ex, _ := os.Executable()
+	builderPath := path.Join(filepath.Dir(ex), "scss-builder.exe")
+
 	out, err := exec.Command(
-		"./scss-builder/scss-builder.exe",
+		builderPath,
 		workingDir,
 		scssPath,
 	).Output()
