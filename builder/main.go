@@ -50,15 +50,45 @@ func main() {
 		buildOptions.Tsconfig = tsConfigPath
 	}
 
-	result := api.Build(buildOptions)
+	// Build or serve
+	if util.GetRuntimeOption("serve").(bool) {
+		buildOptions.Watch = &api.WatchMode{}
+		server, err := api.Serve(api.ServeOptions{
+			Servedir: buildOptions.Outdir,
+			Port:     uint16(util.GetRuntimeOption("port").(int)),
+		},
+			api.BuildOptions{},
+		)
 
-	elapsed := time.Since(start)
+		if err != nil {
+			panic(err)
+		}
 
-	fmt.Println()
-	fmt.Printf("Project built in %s", elapsed)
+		result := api.Build(buildOptions)
+		elapsed := time.Since(start)
 
-	if len(result.Errors) > 0 {
-		fmt.Printf("%+v\n", result.Errors)
-		os.Exit(1)
+		fmt.Printf("Project built in %s", elapsed)
+		fmt.Println()
+
+		if len(result.Errors) > 0 {
+			fmt.Printf("%+v\n", result.Errors)
+			os.Exit(1)
+		}
+
+		fmt.Printf("Server running in: http://localhost:%d", server.Port)
+		fmt.Println()
+		server.Wait()
+	} else {
+		result := api.Build(buildOptions)
+		elapsed := time.Since(start)
+
+		fmt.Printf("Project built in %s", elapsed)
+		fmt.Println()
+
+		if len(result.Errors) > 0 {
+			fmt.Printf("%+v\n", result.Errors)
+			os.Exit(1)
+		}
 	}
+
 }

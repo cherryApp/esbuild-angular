@@ -15,6 +15,8 @@ import (
 
 var AngularOptions *gojsonq.JSONQ
 
+var RuntimeOptions = make(map[string]interface{})
+
 var ProjectName string
 
 func CopyFile(sourceFile string, destinationFile string) {
@@ -77,6 +79,10 @@ func GetProjectOption(key string) interface{} {
 	return AngularOptions.Copy().Find(ProjectName + "." + key)
 }
 
+func GetRuntimeOption(key string) interface{} {
+	return RuntimeOptions[key]
+}
+
 func CheckBuildPath(outputDir string) {
 	if _, err := os.Stat(outputDir); os.IsNotExist(err) {
 		fmt.Println("Creating output directory:", outputDir)
@@ -101,8 +107,10 @@ func GetEsbuildOptions(workingDir string) api.BuildOptions {
 	minify := flag.Bool("minify", true, "minify the result")
 
 	project := flag.String("project", projectNames[0], "project name")
-	// serve := flag.Bool("serve", false, "start the devserver")
-	// port := flag.Int("port", 4200, "devserver port")
+
+	// Runtime options
+	serve := flag.Bool("serve", false, "start the devserver")
+	port := flag.Int("port", 4200, "devserver port")
 
 	flag.Parse()
 
@@ -110,6 +118,9 @@ func GetEsbuildOptions(workingDir string) api.BuildOptions {
 	ProjectName = "projects." + *project
 	main := GetProjectOption("architect.build.options.main")
 	outputPath := GetProjectOption("architect.build.options.outputPath")
+
+	RuntimeOptions["port"] = *port
+	RuntimeOptions["serve"] = *serve
 
 	CheckBuildPath(outputPath.(string))
 

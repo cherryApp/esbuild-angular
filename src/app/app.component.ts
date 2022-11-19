@@ -7,7 +7,7 @@ import { ActivatedRoute, Router } from '@angular/router';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'esbuild-angular';
+  title = 'The Fastest Builder ever!!!';
 
   constructor(
     private router: Router,
