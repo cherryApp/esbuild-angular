@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 
 	cp "github.com/otiai10/copy"
@@ -33,7 +34,11 @@ var ScssWorkerOut *io.Writer
 // Compile sass files.
 func SassCompiler(workingDir string, scssPath string) string {
 	ex, _ := os.Executable()
-	builderPath := path.Join(filepath.Dir(ex), "scss-builder.exe")
+	var builder = "scss-builder.exe"
+	if runtime.GOOS == "linux" {
+		builder = "scss-builder"
+	}
+	builderPath := path.Join(filepath.Dir(ex), builder)
 
 	out, err := exec.Command(
 		builderPath,

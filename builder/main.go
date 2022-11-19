@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 	"time"
-	"runtime"
 
 	"github.com/evanw/esbuild/pkg/api"
 
@@ -18,7 +17,6 @@ var workingDir string
 var srcPath string
 
 func main() {
-	fmt.Printf("\nGOOS:%s", runtime.GOOS)
 	start := time.Now()
 
 	wd, _ := os.Getwd()
