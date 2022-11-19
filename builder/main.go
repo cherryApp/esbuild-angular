@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"time"
+	"runtime"
 
 	"github.com/evanw/esbuild/pkg/api"
 
