@@ -1,7 +1,10 @@
 package main
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
+	"net/http"
 	"os"
 	"path"
 	"time"
@@ -15,6 +18,31 @@ import (
 // Global variables
 var workingDir string
 var srcPath string
+var buildOptions api.BuildOptions
+var BuildFs embed.FS
+
+// func serveHome(w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != http.MethodGet {
+// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
+
+// 	indexPath := path.Join(buildOptions.Outdir, "index.html")
+
+// 	http.ServeFile(w, r, indexPath)
+// }
+
+func BuildHTTPFS() http.FileSystem {
+	build, err := fs.Sub(BuildFs, buildOptions.Outdir)
+	if err != nil {
+		panic(err)
+	}
+	return http.FS(build)
+}
+
+func handleSPA(w http.ResponseWriter, r *http.Request) {
+	http.FileServer(BuildHTTPFS()).ServeHTTP(w, r)
+}
 
 func main() {
 	start := time.Now()
@@ -22,7 +50,7 @@ func main() {
 	wd, _ := os.Getwd()
 	workingDir = wd
 
-	buildOptions := util.GetEsbuildOptions(workingDir)
+	buildOptions = util.GetEsbuildOptions(workingDir)
 
 	indexFilePath := path.Join(
 		workingDir,
@@ -52,32 +80,46 @@ func main() {
 
 	// Build or serve
 	if util.GetRuntimeOption("serve").(bool) {
-		buildOptions.Watch = &api.WatchMode{}
-		server, err := api.Serve(api.ServeOptions{
-			Servedir: buildOptions.Outdir,
-			Port:     uint16(util.GetRuntimeOption("port").(int)),
-		},
-			api.BuildOptions{},
-		)
+		var addr = "127.0.0.1:" + fmt.Sprintf("%v", util.GetRuntimeOption("port"))
+		http.HandleFunc("/", handleSPA)
+		http.ListenAndServe(addr, nil)
+		// fs := http.FileServer(http.Dir(buildOptions.Outdir))
+		// http.Handle("/", fs)
+		// err := http.ListenAndServe(addr, nil)
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		if err != nil {
-			panic(err)
-		}
+		// http.HandleFunc("/", serveHome)
+		// http.HandleFunc("/ws", serveWs)
+		// http.ListenAndServe(addr, nil)
 
-		result := api.Build(buildOptions)
-		elapsed := time.Since(start)
+		// buildOptions.Watch = &api.WatchMode{}
+		// server, err := api.Serve(api.ServeOptions{
+		// 	Servedir: buildOptions.Outdir,
+		// 	Port:     uint16(util.GetRuntimeOption("port").(int)),
+		// },
+		// 	api.BuildOptions{},
+		// )
 
-		fmt.Printf("Project built in %s", elapsed)
-		fmt.Println()
+		// if err != nil {
+		// 	panic(err)
+		// }
 
-		if len(result.Errors) > 0 {
-			fmt.Printf("%+v\n", result.Errors)
-			os.Exit(1)
-		}
+		// result := api.Build(buildOptions)
+		// elapsed := time.Since(start)
 
-		fmt.Printf("Server running in: http://localhost:%d", server.Port)
-		fmt.Println()
-		server.Wait()
+		// fmt.Printf("Project built in %s", elapsed)
+		// fmt.Println()
+
+		// if len(result.Errors) > 0 {
+		// 	fmt.Printf("%+v\n", result.Errors)
+		// 	os.Exit(1)
+		// }
+
+		// fmt.Printf("Server running in: http://localhost:%d", server.Port)
+		// fmt.Println()
+		// server.Wait()
 	} else {
 		result := api.Build(buildOptions)
 		elapsed := time.Since(start)
