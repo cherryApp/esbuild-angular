@@ -36,7 +36,7 @@ func SassCompiler(workingDir string, scssPath string) string {
 	ex, _ := os.Executable()
 	var builder = "compile-sass.exe"
 	if runtime.GOOS == "linux" {
-		builder = "scss-builder"
+		builder = "compile-sass"
 	}
 	builderPath := path.Join(filepath.Dir(ex), builder)
 

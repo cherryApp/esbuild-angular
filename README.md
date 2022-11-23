@@ -4,7 +4,8 @@
 - OK -> [SCSS](https://siongui.github.io/2016/01/28/go-compile-sass-scss/)
 - OK -> Hoisting injects from the constructor.
 - OK -> Compile component-level .css and .scss correctly.
-- OS-specific run
+- OK -> OS-specific run.
+- OK -> Using smaller Dart compiler.
 
 ## Tips
 ### Communitace between two go programs
