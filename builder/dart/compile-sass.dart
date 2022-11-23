@@ -17,6 +17,6 @@ void main(List<String> arguments) {
     // charset: 'utf8',
   );
   // new File(arguments[1]).writeAsStringSync(result);
-  print(result);
+  print(result.css);
   // print('doSomething() executed in ${stopwatch.elapsed}');
 }
