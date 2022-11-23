@@ -2,6 +2,10 @@
 $base-color: #c6538c;
 $border-dark: rgba($base-color, 0.88);
 
+@use '@angular/material' as mat;
+
+@include mat.core();
+
 .alert {
   border: 1px solid $border-dark;
 }

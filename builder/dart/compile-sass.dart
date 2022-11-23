@@ -7,7 +7,7 @@ void main(List<String> arguments) {
     arguments[1],
     // logger: logger,
     // importers: importers,
-    loadPaths: [arguments[0]],
+    loadPaths: [arguments[0], arguments[0] + '/node_modules'],
     // packageConfig: packageConfig,
     // functions: functions,
     // style: style,

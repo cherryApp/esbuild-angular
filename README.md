@@ -5,7 +5,8 @@
 - OK -> Hoisting injects from the constructor.
 - OK -> Compile component-level .css and .scss correctly.
 - OK -> OS-specific run.
-- OK -> Using smaller Dart compiler.
+- OK -> SCSS: using smaller Dart compiler.
+- Live server writen in Go.
 
 ## Tips
 ### Communitace between two go programs
