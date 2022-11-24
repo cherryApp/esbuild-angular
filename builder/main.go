@@ -3,7 +3,6 @@ package main
 import (
 	"embed"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -20,6 +19,7 @@ var workingDir string
 var srcPath string
 var buildOptions api.BuildOptions
 var BuildFs embed.FS
+var indexFile *os.File
 
 // func serveHome(w http.ResponseWriter, r *http.Request) {
 // 	if r.Method != http.MethodGet {
@@ -32,16 +32,45 @@ var BuildFs embed.FS
 // 	http.ServeFile(w, r, indexPath)
 // }
 
-func BuildHTTPFS() http.FileSystem {
-	build, err := fs.Sub(BuildFs, buildOptions.Outdir)
-	if err != nil {
-		panic(err)
-	}
-	return http.FS(build)
+// func BuildHTTPFS() http.FileSystem {
+// 	build, err := fs.Sub(BuildFs, buildOptions.Outdir)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	return http.FS(build)
+// }
+
+// func handleSPA(w http.ResponseWriter, r *http.Request) {
+// 	http.FileServer(BuildHTTPFS()).ServeHTTP(w, r)
+// }
+
+func serveSPS(fs http.FileSystem) http.Handler {
+	fileServer := http.FileServer(fs)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := fs.Open(path.Clean(r.URL.Path)) // Do not allow path traversals.
+		if err != nil {
+			indexPath := path.Join(buildOptions.Outdir, "index.html")
+			if indexFile == nil {
+				indexFile, _ = os.Open(indexPath)
+			}
+			http.ServeContent(w, r, indexPath, time.Time{}, indexFile)
+			return
+		}
+		fileServer.ServeHTTP(w, r)
+	})
 }
 
-func handleSPA(w http.ResponseWriter, r *http.Request) {
-	http.FileServer(BuildHTTPFS()).ServeHTTP(w, r)
+func rebuild(start time.Time) {
+	result := api.Build(buildOptions)
+	elapsed := time.Since(start)
+
+	fmt.Printf("Project built in %s", elapsed)
+	fmt.Println()
+
+	if len(result.Errors) > 0 {
+		fmt.Printf("%+v\n", result.Errors)
+		os.Exit(1)
+	}
 }
 
 func main() {
@@ -78,59 +107,11 @@ func main() {
 		buildOptions.Tsconfig = tsConfigPath
 	}
 
-	// Build or serve
+	// Build and serve
+	rebuild(start)
 	if util.GetRuntimeOption("serve").(bool) {
 		var addr = "127.0.0.1:" + fmt.Sprintf("%v", util.GetRuntimeOption("port"))
-		http.HandleFunc("/", handleSPA)
-		http.ListenAndServe(addr, nil)
-		// fs := http.FileServer(http.Dir(buildOptions.Outdir))
-		// http.Handle("/", fs)
-		// err := http.ListenAndServe(addr, nil)
-		// if err != nil {
-		// 	panic(err)
-		// }
-
-		// http.HandleFunc("/", serveHome)
-		// http.HandleFunc("/ws", serveWs)
-		// http.ListenAndServe(addr, nil)
-
-		// buildOptions.Watch = &api.WatchMode{}
-		// server, err := api.Serve(api.ServeOptions{
-		// 	Servedir: buildOptions.Outdir,
-		// 	Port:     uint16(util.GetRuntimeOption("port").(int)),
-		// },
-		// 	api.BuildOptions{},
-		// )
-
-		// if err != nil {
-		// 	panic(err)
-		// }
-
-		// result := api.Build(buildOptions)
-		// elapsed := time.Since(start)
-
-		// fmt.Printf("Project built in %s", elapsed)
-		// fmt.Println()
-
-		// if len(result.Errors) > 0 {
-		// 	fmt.Printf("%+v\n", result.Errors)
-		// 	os.Exit(1)
-		// }
-
-		// fmt.Printf("Server running in: http://localhost:%d", server.Port)
-		// fmt.Println()
-		// server.Wait()
-	} else {
-		result := api.Build(buildOptions)
-		elapsed := time.Since(start)
-
-		fmt.Printf("Project built in %s", elapsed)
-		fmt.Println()
-
-		if len(result.Errors) > 0 {
-			fmt.Printf("%+v\n", result.Errors)
-			os.Exit(1)
-		}
+		http.ListenAndServe(addr, serveSPS(http.Dir(buildOptions.Outdir)))
 	}
 
 }

@@ -8,10 +8,14 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { HomeComponent } from './page/home/home.component';
+import { UserComponent } from './page/user/user.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    HomeComponent,
+    UserComponent
   ],
   imports: [
     BrowserModule,
