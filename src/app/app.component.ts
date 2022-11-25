@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { Component, inject, Inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
@@ -9,8 +9,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 export class AppComponent {
   title = 'The Fastest Builder ever!!!';
 
+  private ar: ActivatedRoute = inject(ActivatedRoute);
+
+  private router: Router = inject(Router);
+
   constructor(
-    private router: Router,
-    private ar: ActivatedRoute,
   ) {}
 }
