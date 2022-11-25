@@ -134,5 +134,6 @@ func RefreshLiveServerPage() {
 func LiveServer(_buildOptions api.BuildOptions) {
 	buildOptions = _buildOptions
 	var addr = "127.0.0.1:" + fmt.Sprintf("%v", GetRuntimeOption("port"))
+  fmt.Println("LiveServer runs on: http://" + addr)
 	http.ListenAndServe(addr, serveSPS(http.Dir(buildOptions.Outdir)))
 }
