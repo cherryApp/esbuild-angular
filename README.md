@@ -6,7 +6,8 @@
 - OK -> Compile component-level .css and .scss correctly.
 - OK -> OS-specific run.
 - OK -> SCSS: using smaller Dart compiler.
-- IP -> Live server writen in Go.
+- OK -> Live server writen in Go.
+- IP -> Set --base-href option.
 
 ## Tips
 ### Communitace between two go programs
