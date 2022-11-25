@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -7,9 +8,14 @@ import { Component, OnInit } from '@angular/core';
 })
 export class HomeComponent implements OnInit {
 
+  router: Router = inject(Router);
+
+  ar: ActivatedRoute = inject(ActivatedRoute);
+
   constructor() { }
 
   ngOnInit(): void {
+    console.log("Home inited Bond, James Bond!");
   }
 
 }

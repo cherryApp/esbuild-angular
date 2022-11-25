@@ -1,5 +1,7 @@
 github.com/evanw/esbuild v0.15.13 h1:te8r0UKusPzGgn8ylltb33Ffsbum+3tQDyHcg6MOwn8=
 github.com/evanw/esbuild v0.15.13/go.mod h1:iINY06rn799hi48UqEnaQvVfZWe6W9bET78LbvN8VWk=
+github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
+github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/nmrshll/go-cp v0.0.0-20180115193924-61436d3b7cfa h1:/SRdH7jdcIW6WBtZO1BlpI+6TxqpOiMqLZJ10Uhk0k0=
 github.com/nmrshll/go-cp v0.0.0-20180115193924-61436d3b7cfa/go.mod h1:/Uh/WFiWYXoTKVsM302U10XnogAldY7up/xErXmt1FA=
 github.com/otiai10/copy v1.9.0 h1:7KFNiCgZ91Ru4qW4CWPf/7jqtxLagGRmIxWldPP9VY4=

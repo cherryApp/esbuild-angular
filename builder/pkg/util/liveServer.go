@@ -12,14 +12,41 @@ import (
 	"github.com/evanw/esbuild/pkg/api"
 
 	"cherryApp/esbuild-angular/pkg/fswatch"
+
+  "github.com/gorilla/websocket"
 )
 
+var WsConn *websocket.Conn
+var upgrader = websocket.Upgrader{} // use default options
 var buildOptions api.BuildOptions
 var indexFile *os.File
+const WsScript = `<script type="text/javascript">
+            (function() {
+				const wsOrigin = location.origin.replace(/^http/, 'ws');
+                ws = new WebSocket(wsOrigin + '/__ws');
+				ws.onmessage = function(evt) {
+					if (evt.data === 'command:refresh') {
+						location.reload();
+					}
+				}
+				ws.onerror = function(evt) {
+					console.log("Websocket Error, Live-Server: " + evt.data);
+				}
+			})();
+        </script>
+`
 
 func serveSPS(fs http.FileSystem) http.Handler {
 	fileServer := http.FileServer(fs)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Websocket
+		if r.URL.Path == "/__ws" {
+			serveWs(w, r, func(conn *websocket.Conn) {
+        WsConn = conn
+			})
+			return
+		}
+
 		_, err := fs.Open(path.Clean(r.URL.Path)) // Do not allow path traversals.
 		if err != nil {
 			indexPath := path.Join(buildOptions.Outdir, "index.html")
@@ -59,23 +86,49 @@ func FileWatcher(_buildOptions api.BuildOptions, callback func(string)) {
 
 			case <-folderWatcher.Modified():
 				callback("New or modified items detected")
-				// fmt.Println("New or modified items detected")
 
 			case <-folderWatcher.Moved():
 				callback("Items have been moved")
-				// fmt.Println("Items have been moved")
-
-				// case changes := <-folderWatcher.ChangeDetails():
-
-				// 	fmt.Printf("%s\n", changes.String())
-				// 	fmt.Printf("New: %#v\n", changes.New())
-				// 	fmt.Printf("Modified: %#v\n", changes.Modified())
-				// 	fmt.Printf("Moved: %#v\n", changes.Moved())
 
 			}
 		}
 
 	}()
+}
+
+func serveWs(w http.ResponseWriter, r *http.Request, callback func(*websocket.Conn))  {
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		fmt.Println("upgrade:", err)
+		return
+	}
+
+  callback(c)
+
+	defer c.Close()
+	for {
+		mt, message, err := c.ReadMessage()
+		if err != nil {
+			// fmt.Println("read:", err)
+			break
+		}
+
+		err = c.WriteMessage(mt, message)
+		if err != nil {
+			fmt.Println("write:", err)
+			break
+		}
+	}
+}
+
+func RefreshLiveServerPage() {
+  if WsConn == nil {
+    return
+  }
+
+  if err := WsConn.WriteMessage(1, []byte("command:refresh")); err != nil {
+    fmt.Println("Error in Websocket:", err)
+  }
 }
 
 func LiveServer(_buildOptions api.BuildOptions) {

@@ -71,6 +71,7 @@ func main() {
 			fmt.Println(message)
 			start := time.Now()
 			rebuild(start)
+      util.RefreshLiveServerPage()
 		})
 		util.LiveServer(buildOptions)
 	}
