@@ -13,17 +13,18 @@ import (
 
 	"cherryApp/esbuild-angular/pkg/fswatch"
 
-  "github.com/gorilla/websocket"
+	"github.com/gorilla/websocket"
 )
 
 var WsConn *websocket.Conn
 var upgrader = websocket.Upgrader{} // use default options
 var buildOptions api.BuildOptions
 var indexFile *os.File
+
 const WsScript = `<script type="text/javascript">
             (function() {
-				const wsOrigin = location.origin.replace(/^http/, 'ws');
-                ws = new WebSocket(wsOrigin + '/__ws');
+				const wsOrigin = document.head.querySelector("base").href.replace(/^http/, 'ws');
+                ws = new WebSocket(wsOrigin + '__ws');
 				ws.onmessage = function(evt) {
 					if (evt.data === 'command:refresh') {
 						location.reload();
@@ -42,7 +43,7 @@ func serveSPS(fs http.FileSystem) http.Handler {
 		// Websocket
 		if r.URL.Path == "/__ws" {
 			serveWs(w, r, func(conn *websocket.Conn) {
-        WsConn = conn
+				WsConn = conn
 			})
 			return
 		}
@@ -96,14 +97,14 @@ func FileWatcher(_buildOptions api.BuildOptions, callback func(string)) {
 	}()
 }
 
-func serveWs(w http.ResponseWriter, r *http.Request, callback func(*websocket.Conn))  {
+func serveWs(w http.ResponseWriter, r *http.Request, callback func(*websocket.Conn)) {
 	c, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("upgrade:", err)
 		return
 	}
 
-  callback(c)
+	callback(c)
 
 	defer c.Close()
 	for {
@@ -122,18 +123,18 @@ func serveWs(w http.ResponseWriter, r *http.Request, callback func(*websocket.Co
 }
 
 func RefreshLiveServerPage() {
-  if WsConn == nil {
-    return
-  }
+	if WsConn == nil {
+		return
+	}
 
-  if err := WsConn.WriteMessage(1, []byte("command:refresh")); err != nil {
-    fmt.Println("Error in Websocket:", err)
-  }
+	if err := WsConn.WriteMessage(1, []byte("command:refresh")); err != nil {
+		fmt.Println("Error in Websocket:", err)
+	}
 }
 
 func LiveServer(_buildOptions api.BuildOptions) {
 	buildOptions = _buildOptions
 	var addr = "127.0.0.1:" + fmt.Sprintf("%v", GetRuntimeOption("port"))
-  fmt.Println("LiveServer runs on: http://" + addr)
+	fmt.Println("LiveServer runs on: http://" + addr)
 	http.ListenAndServe(addr, serveSPS(http.Dir(buildOptions.Outdir)))
 }

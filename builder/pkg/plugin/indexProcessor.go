@@ -33,13 +33,13 @@ func GetIndexFileProcessor(indexFilePath string, outPath string) api.Plugin {
 					</body>`,
 				)
 
-        if util.GetRuntimeOption("serve").(bool) {
-          indexFileContent = reg.ReplaceAllString(
-            indexFileContent,
-            util.WsScript + `
-            </body>`,
-          )
-        }
+				if util.GetRuntimeOption("serve").(bool) {
+					indexFileContent = reg.ReplaceAllString(
+						indexFileContent,
+						util.WsScript+`
+						</body>`,
+					)
+				}
 
 				reg = regexp.MustCompile(`(?im)\<\/head\>`)
 				indexFileContent = reg.ReplaceAllString(
