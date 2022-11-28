@@ -4,7 +4,6 @@ import (
 	"os"
 	"path"
 	"regexp"
-  "fmt"
 
 	"github.com/evanw/esbuild/pkg/api"
 
@@ -29,7 +28,7 @@ func GetIndexFileProcessor(indexFilePath string, outPath string) api.Plugin {
 
 			build.OnEnd(func(result *api.BuildResult) {
 				reg := regexp.MustCompile(`(?im)\<\/body\>`)
-        baseHref := util.GetRuntimeOption("base-href").(string)
+				baseHref := util.GetRuntimeOption("base-href").(string)
 				indexFileContent = reg.ReplaceAllString(
 					indexFileContent,
 					`<script data-version="0.2" src="vendor.js"></script>
@@ -45,14 +44,13 @@ func GetIndexFileProcessor(indexFilePath string, outPath string) api.Plugin {
 					)
 				}
 
-        // <base href="/"> baseHref
-        fmt.Println("BaseHref:", baseHref)
-        if baseHref != "/" {
-          indexFileContent = regexpBaseHref.ReplaceAllString(
-            indexFileContent,
-            `<base href="` + baseHref + `">`,
-          )
-        }
+				// <base href="/"> baseHref
+				if baseHref != "/" {
+					indexFileContent = regexpBaseHref.ReplaceAllString(
+						indexFileContent,
+						`<base href="`+baseHref+`">`,
+					)
+				}
 
 				reg = regexp.MustCompile(`(?im)\<\/head\>`)
 				indexFileContent = reg.ReplaceAllString(
