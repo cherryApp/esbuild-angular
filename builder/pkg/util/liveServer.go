@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"regexp"
 
 	"github.com/evanw/esbuild/pkg/api"
 
@@ -20,28 +21,29 @@ var WsConn *websocket.Conn
 var upgrader = websocket.Upgrader{} // use default options
 var buildOptions api.BuildOptions
 var indexFile *os.File
+var regexpWebsocketUrl = regexp.MustCompile(`__ws$`)
 
 const WsScript = `<script type="text/javascript">
-            (function() {
-				const wsOrigin = document.head.querySelector("base").href.replace(/^http/, 'ws');
-                ws = new WebSocket(wsOrigin + '__ws');
-				ws.onmessage = function(evt) {
-					if (evt.data === 'command:refresh') {
-						location.reload();
-					}
-				}
-				ws.onerror = function(evt) {
-					console.log("Websocket Error, Live-Server: " + evt.data);
-				}
-			})();
-        </script>
+  (function() {
+    const wsOrigin = document.head.querySelector("base").href.replace(/^http/, 'ws');
+    ws = new WebSocket(wsOrigin + '__ws');
+    ws.onmessage = function(evt) {
+      if (evt.data === 'command:refresh') {
+        location.reload();
+      }
+    }
+    ws.onerror = function(evt) {
+      console.log("Websocket Error, Live-Server: " + evt.data);
+    }
+  })();
+</script>
 `
 
 func serveSPS(fs http.FileSystem) http.Handler {
 	fileServer := http.FileServer(fs)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Websocket
-		if r.URL.Path == "/__ws" {
+		if regexpWebsocketUrl.MatchString(r.URL.Path) {
 			serveWs(w, r, func(conn *websocket.Conn) {
 				WsConn = conn
 			})

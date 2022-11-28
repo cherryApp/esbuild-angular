@@ -10,6 +10,8 @@ import (
 	"cherryApp/esbuild-angular/pkg/util"
 )
 
+var regexpBaseHref = regexp.MustCompile(`\<base *href=\"\/\"\>`)
+
 func GetIndexFileProcessor(indexFilePath string, outPath string) api.Plugin {
 	return api.Plugin{
 		Name: "indexProcessor",
@@ -26,6 +28,7 @@ func GetIndexFileProcessor(indexFilePath string, outPath string) api.Plugin {
 
 			build.OnEnd(func(result *api.BuildResult) {
 				reg := regexp.MustCompile(`(?im)\<\/body\>`)
+        baseHref := util.GetRuntimeOption("base-href").(string)
 				indexFileContent = reg.ReplaceAllString(
 					indexFileContent,
 					`<script data-version="0.2" src="vendor.js"></script>
@@ -40,6 +43,14 @@ func GetIndexFileProcessor(indexFilePath string, outPath string) api.Plugin {
 						</body>`,
 					)
 				}
+
+        // <base href="/"> baseHref
+        if baseHref != "/" {
+          indexFileContent = reg.ReplaceAllString(
+            indexFileContent,
+            `<base href="` + baseHref + `">`,
+          )
+        }
 
 				reg = regexp.MustCompile(`(?im)\<\/head\>`)
 				indexFileContent = reg.ReplaceAllString(

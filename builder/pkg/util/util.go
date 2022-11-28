@@ -111,6 +111,7 @@ func GetEsbuildOptions(workingDir string) api.BuildOptions {
 	// Runtime options
 	serve := flag.Bool("serve", false, "start the devserver")
 	port := flag.Int("port", 4200, "devserver port")
+	baseHref := flag.String("base-href", "/", "Base url for the application being built.")
 
 	flag.Parse()
 
@@ -121,6 +122,7 @@ func GetEsbuildOptions(workingDir string) api.BuildOptions {
 
 	RuntimeOptions["port"] = *port
 	RuntimeOptions["serve"] = *serve
+	RuntimeOptions["base-href"] = *baseHref
 
 	CheckBuildPath(outputPath.(string))
 

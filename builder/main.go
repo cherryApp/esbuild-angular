@@ -17,7 +17,7 @@ var workingDir string
 var srcPath string
 var buildOptions api.BuildOptions
 
-func rebuild(start time.Time) {
+func rebuild(start time.Time) api.BuildResult {
 	result := api.Build(buildOptions)
 	elapsed := time.Since(start)
 
@@ -28,6 +28,8 @@ func rebuild(start time.Time) {
 		fmt.Printf("%+v\n", result.Errors)
 		os.Exit(1)
 	}
+
+  return result
 }
 
 func main() {
@@ -65,15 +67,18 @@ func main() {
 	}
 
 	// Build and serve
-	rebuild(start)
 	if util.GetRuntimeOption("serve").(bool) {
-		util.FileWatcher(buildOptions, func(message string) {
+    // buildOptions.Write = false;
+    rebuild(start)
+    util.FileWatcher(buildOptions, func(message string) {
 			fmt.Println(message)
 			start := time.Now()
 			rebuild(start)
       util.RefreshLiveServerPage()
 		})
 		util.LiveServer(buildOptions)
-	}
+    } else {
+      rebuild(start)
+    }
 
 }
