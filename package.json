@@ -13,7 +13,7 @@
     "build:nix": "./builder/esbuild-angular --minify=true",
     "sass-compile": "run-script-os",
     "sass-compile:windows": "cd .\\builder\\dart && dart compile exe .\\compile-sass.dart && copy .\\compile-sass.exe ..\\compile-sass.exe",
-    "sass-compile:macos": "./builder/esbuild-angular-mac --minify=true",
+    "sass-compile:macos": "cd ./builder/dart  && dart compile exe ./compile-sass.dart -o compile-sass-mac && cp compile-sass-mac ../compile-sass-mac",
     "sass-compile:nix": "cd ./builder/dart && dart compile exe ./compile-sass.dart -o compile-sass && cp compile-sass ../compile-sass"
   },
   "private": true,
