@@ -4,13 +4,14 @@ import (
 	"os"
 	"path"
 	"regexp"
+  "fmt"
 
 	"github.com/evanw/esbuild/pkg/api"
 
 	"cherryApp/esbuild-angular/pkg/util"
 )
 
-var regexpBaseHref = regexp.MustCompile(`\<base *href=\"\/\"\>`)
+var regexpBaseHref = regexp.MustCompile(`\<base *href\=\"\/\"\>`)
 
 func GetIndexFileProcessor(indexFilePath string, outPath string) api.Plugin {
 	return api.Plugin{
@@ -45,8 +46,9 @@ func GetIndexFileProcessor(indexFilePath string, outPath string) api.Plugin {
 				}
 
         // <base href="/"> baseHref
+        fmt.Println("BaseHref:", baseHref)
         if baseHref != "/" {
-          indexFileContent = reg.ReplaceAllString(
+          indexFileContent = regexpBaseHref.ReplaceAllString(
             indexFileContent,
             `<base href="` + baseHref + `">`,
           )
